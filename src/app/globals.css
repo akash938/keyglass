@@ -1,0 +1,214 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+:root {
+  --bg-canvas: #f8f9fc;
+  --bg-gradient-1: rgba(120, 170, 255, 0.22);
+  --bg-gradient-2: rgba(196, 155, 255, 0.17);
+  --bg-gradient-3: rgba(110, 231, 210, 0.16);
+
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.64);
+  --glass-border: rgba(255, 255, 255, 0.9);
+  --glass-border-outer: rgba(15, 23, 42, 0.075);
+  --glass-shadow:
+    0 14px 36px -12px rgba(15, 23, 42, 0.08),
+    0 2px 10px -2px rgba(15, 23, 42, 0.04),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.94);
+
+  --text-primary: #111216;
+  --text-secondary: #525866;
+  --text-tertiary: #7e8594;
+
+  --key-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 245, 249, 0.94) 100%);
+  --key-border: rgba(15, 23, 42, 0.11);
+  --key-shadow:
+    0 2px 0 0 rgba(15, 23, 42, 0.11),
+    0 3px 6px -2px rgba(15, 23, 42, 0.07),
+    inset 0 1px 0 0 rgba(255, 255, 255, 1);
+
+  --key-active-bg: linear-gradient(180deg, #007aff 0%, #005fd1 100%);
+  --key-active-shadow:
+    0 0 0 1px rgba(0, 122, 255, 0.45),
+    0 5px 16px -2px rgba(0, 122, 255, 0.45),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45);
+
+  --key-tested-bg: linear-gradient(180deg, rgba(232, 250, 240, 0.96) 0%, rgba(212, 245, 228, 0.92) 100%);
+  --key-tested-border: rgba(16, 185, 129, 0.36);
+  --key-tested-text: #046c4e;
+  --key-tested-shadow:
+    0 2px 0 0 rgba(16, 185, 129, 0.18),
+    0 3px 8px -2px rgba(16, 185, 129, 0.11),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.92);
+
+  --key-chatter-bg: linear-gradient(180deg, rgba(254, 235, 232, 0.96) 0%, rgba(254, 215, 210, 0.92) 100%);
+  --key-chatter-border: rgba(239, 68, 68, 0.48);
+  --key-chatter-text: #b91c1c;
+
+  --deck-bg: linear-gradient(180deg, rgba(236, 238, 244, 0.78) 0%, rgba(226, 229, 237, 0.74) 100%);
+  --deck-border: rgba(255, 255, 255, 0.85);
+  --deck-inner-shadow: inset 0 2px 6px rgba(15, 23, 42, 0.055);
+
+  --accent: #0071e3;
+  --accent-soft: rgba(0, 113, 227, 0.1);
+}
+
+.dark {
+  --bg-canvas: #08090c;
+  --bg-gradient-1: rgba(45, 120, 255, 0.18);
+  --bg-gradient-2: rgba(139, 92, 246, 0.15);
+  --bg-gradient-3: rgba(16, 185, 129, 0.12);
+
+  --glass-bg: rgba(24, 26, 33, 0.74);
+  --glass-bg-strong: rgba(28, 31, 40, 0.88);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.055);
+  --glass-border: rgba(255, 255, 255, 0.11);
+  --glass-border-outer: rgba(0, 0, 0, 0.45);
+  --glass-shadow:
+    0 18px 44px -12px rgba(0, 0, 0, 0.58),
+    0 3px 12px -4px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a6b4;
+  --text-tertiary: #6d7382;
+
+  --key-bg: linear-gradient(180deg, rgba(44, 47, 57, 0.94) 0%, rgba(30, 32, 40, 0.96) 100%);
+  --key-border: rgba(255, 255, 255, 0.11);
+  --key-shadow:
+    0 2px 0 0 rgba(0, 0, 0, 0.72),
+    0 4px 8px -2px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.13);
+
+  --key-active-bg: linear-gradient(180deg, #1a8cff 0%, #0066d6 100%);
+  --key-active-shadow:
+    0 0 0 1px rgba(64, 156, 255, 0.55),
+    0 0 18px 0 rgba(10, 132, 255, 0.52),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45);
+
+  --key-tested-bg: linear-gradient(180deg, rgba(16, 76, 56, 0.82) 0%, rgba(12, 54, 41, 0.88) 100%);
+  --key-tested-border: rgba(52, 211, 153, 0.36);
+  --key-tested-text: #6ee7b7;
+  --key-tested-shadow:
+    0 2px 0 0 rgba(0, 0, 0, 0.55),
+    0 3px 10px -2px rgba(16, 185, 129, 0.2),
+    inset 0 1px 0 0 rgba(110, 231, 183, 0.22);
+
+  --key-chatter-bg: linear-gradient(180deg, rgba(127, 29, 29, 0.85) 0%, rgba(92, 20, 20, 0.92) 100%);
+  --key-chatter-border: rgba(248, 113, 113, 0.52);
+  --key-chatter-text: #fca5a5;
+
+  --deck-bg: linear-gradient(180deg, rgba(14, 16, 21, 0.88) 0%, rgba(10, 11, 15, 0.94) 100%);
+  --deck-border: rgba(255, 255, 255, 0.08);
+  --deck-inner-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.65);
+
+  --accent: #2997ff;
+  --accent-soft: rgba(41, 151, 255, 0.14);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  transition: background-color 0.28s ease, color 0.28s ease;
+}
+
+/* Lightweight Hardware-Accelerated Apple Glassmorphism Surfaces
+   (Uses crisp 14-18px backdrop blur + layout/paint containment to stay 120fps on Retina displays) */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(155%);
+  -webkit-backdrop-filter: blur(14px) saturate(155%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 0 0 1px var(--glass-border-outer);
+  contain: layout style;
+}
+
+.glass-panel-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(18px) saturate(165%);
+  -webkit-backdrop-filter: blur(18px) saturate(165%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 0 0 1px var(--glass-border-outer);
+  contain: layout style;
+}
+
+.glass-pill {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 0 1px var(--glass-border-outer);
+}
+
+.keyboard-deck {
+  background: var(--deck-bg);
+  border: 1px solid var(--deck-border);
+  box-shadow: var(--deck-inner-shadow), 0 0 0 1px var(--glass-border-outer);
+  contain: layout style paint;
+}
+
+/* Tactile Keycap Styles — transition only colors (Framer Motion drives GPU transform) */
+.keycap-base {
+  background: var(--key-bg);
+  border: 1px solid var(--key-border);
+  box-shadow: var(--key-shadow);
+  color: var(--text-primary);
+}
+
+.keycap-active {
+  background: var(--key-active-bg);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: var(--key-active-shadow);
+  color: #ffffff;
+}
+
+.keycap-tested {
+  background: var(--key-tested-bg);
+  border: 1px solid var(--key-tested-border);
+  box-shadow: var(--key-tested-shadow);
+  color: var(--key-tested-text);
+}
+
+.keycap-chatter {
+  background: var(--key-chatter-bg);
+  border: 1px solid var(--key-chatter-border);
+  box-shadow: var(--key-shadow);
+  color: var(--key-chatter-text);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.glass-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.glass-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.glass-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(128, 134, 148, 0.28);
+  border-radius: 9999px;
+}
+.glass-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 134, 148, 0.45);
+}
