@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Keyboard,
   Lock,
+  Maximize2,
+  Minimize2,
   Moon,
   RotateCcw,
   Sun,
@@ -18,6 +20,11 @@ interface TopNavbarProps {
   onToggleSound: () => void;
   testLock: boolean;
   onToggleTestLock: () => void;
+  fullscreenLocked: boolean;
+  keyboardApiLocked: boolean;
+  canFullscreenLock: boolean;
+  canKeyboardLockApi: boolean;
+  onToggleFullscreenLock: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   onReset: () => void;
@@ -31,11 +38,17 @@ export const TopNavbar = memo(function TopNavbar({
   onToggleSound,
   testLock,
   onToggleTestLock,
+  fullscreenLocked,
+  keyboardApiLocked,
+  canFullscreenLock,
+  canKeyboardLockApi,
+  onToggleFullscreenLock,
   darkMode,
   onToggleDarkMode,
   onReset,
 }: TopNavbarProps) {
   const [resetRotation, setResetRotation] = useState(0);
+  const navTabIndex = testLock ? -1 : 0;
 
   return (
     <header className="sticky top-0 z-40 px-3 pt-2.5 sm:px-6">
@@ -43,7 +56,11 @@ export const TopNavbar = memo(function TopNavbar({
         aria-label="Primary Navigation"
         className="glass-panel-strong mx-auto flex max-w-[1280px] items-center justify-between gap-3 rounded-full px-3.5 py-2 sm:px-5"
       >
-        <a href="#tester" tabIndex={-1} className="flex items-center gap-2.5 focus:outline-none">
+        <a
+          href="#tester"
+          tabIndex={navTabIndex}
+          className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded-full"
+        >
           <motion.div
             whileHover={{ scale: 1.07, rotate: -4 }}
             whileTap={{ scale: 0.92 }}
@@ -73,11 +90,11 @@ export const TopNavbar = memo(function TopNavbar({
             <motion.a
               key={link.href}
               href={link.href}
-              tabIndex={-1}
+              tabIndex={navTabIndex}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.96 }}
               transition={BTN_SPRING}
-              className="transition-colors hover:text-[var(--text-primary)]"
+              className="rounded-md transition-colors hover:text-[var(--text-primary)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none"
             >
               {link.label}
             </motion.a>
@@ -91,7 +108,7 @@ export const TopNavbar = memo(function TopNavbar({
             whileTap={{ scale: 0.9 }}
             transition={BTN_SPRING}
             type="button"
-            tabIndex={-1}
+            tabIndex={navTabIndex}
             onClick={onToggleSound}
             title={soundEnabled ? "Mute tactile sound" : "Enable tactile sound"}
             aria-label={soundEnabled ? "Mute key sound" : "Enable key sound"}
@@ -121,13 +138,13 @@ export const TopNavbar = memo(function TopNavbar({
             whileTap={{ scale: 0.93 }}
             transition={BTN_SPRING}
             type="button"
-            tabIndex={-1}
+            tabIndex={navTabIndex}
             aria-pressed={testLock}
             onClick={onToggleTestLock}
             title={
               testLock
-                ? "Key Lock ON: Blocks browser scrolling, Tab focus jump, F1–F12 & shortcuts"
-                : "Key Lock OFF: Normal browser shortcuts & scrolling allowed"
+                ? "Key Lock ON: Blocks browser scrolling, Tab focus jump, F1–F12 & shortcuts. Click to turn OFF."
+                : "Key Lock OFF: Normal browser shortcuts, Tab & scrolling allowed. Click to turn ON."
             }
             className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[11.5px] font-medium transition-colors ${
               testLock
@@ -150,13 +167,49 @@ export const TopNavbar = memo(function TopNavbar({
             <span>{testLock ? "Key Lock On" : "Key Lock Off"}</span>
           </motion.button>
 
+          {/* Fullscreen Browser Keyboard Lock API Toggle (Traps F11, Esc & Cmd/Ctrl shortcuts in Chrome/Edge) */}
+          {canFullscreenLock && (
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.93 }}
+              transition={BTN_SPRING}
+              type="button"
+              tabIndex={navTabIndex}
+              aria-pressed={fullscreenLocked}
+              onClick={onToggleFullscreenLock}
+              title={
+                fullscreenLocked
+                  ? keyboardApiLocked
+                    ? "Fullscreen Keyboard Lock ACTIVE: Browser shortcuts (F11, Esc, Cmd/Ctrl+W/T/N/R) trapped. Hold Esc or click to exit."
+                    : "Fullscreen mode active. Click or press Esc to exit."
+                  : canKeyboardLockApi
+                    ? "Enter Fullscreen + W3C Keyboard Lock API to trap browser-reserved shortcuts (F11, Esc, Cmd/Ctrl+W/T/N/R)"
+                    : "Enter Fullscreen capture mode"
+              }
+              className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[11.5px] font-medium transition-colors ${
+                fullscreenLocked
+                  ? "border-[var(--accent)]/45 bg-[var(--accent)]/15 text-[var(--accent)] shadow-[0_2px_10px_rgba(0,113,227,0.18)]"
+                  : "border-black/[0.08] bg-black/[0.04] text-[var(--text-secondary)] hover:bg-black/[0.08] hover:text-[var(--text-primary)] dark:border-white/[0.1] dark:bg-white/[0.06]"
+              }`}
+            >
+              {fullscreenLocked ? (
+                <Minimize2 className="h-3 w-3" />
+              ) : (
+                <Maximize2 className="h-3 w-3" />
+              )}
+              <span className="hidden sm:inline">
+                {fullscreenLocked ? "FS Locked" : "FS Lock"}
+              </span>
+            </motion.button>
+          )}
+
           {/* Theme Toggle with Smooth Rotating Sun <-> Moon */}
           <motion.button
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.9 }}
             transition={BTN_SPRING}
             type="button"
-            tabIndex={-1}
+            tabIndex={navTabIndex}
             onClick={onToggleDarkMode}
             title={darkMode ? "Switch to Apple Light Frost" : "Switch to Apple Dark Glass"}
             aria-label="Toggle color theme"
@@ -182,7 +235,7 @@ export const TopNavbar = memo(function TopNavbar({
             whileTap={{ scale: 0.93 }}
             transition={BTN_SPRING}
             type="button"
-            tabIndex={-1}
+            tabIndex={navTabIndex}
             onClick={() => {
               setResetRotation((r) => r - 360);
               onReset();

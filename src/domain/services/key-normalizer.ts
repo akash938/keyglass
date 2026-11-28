@@ -1,4 +1,4 @@
-import { OsMode } from "@/domain/entities/keyboard";
+import type { OsMode } from "@/domain/entities/keyboard";
 
 const CHAR_TO_CODE: Record<string, string> = {
   "`": "Backquote",
@@ -72,6 +72,7 @@ const SPECIAL_KEY_TO_CODE: Record<string, string> = {
   NumLock: "NumLock",
   ContextMenu: "ContextMenu",
   Fn: "Fn",
+  FnLock: "Fn",
   Function: "Fn",
   Globe: "Fn",
 };
@@ -90,20 +91,38 @@ const MAC_MEDIA_TO_FKEY: Record<string, string> = {
   VolumeUp: "F12",
 };
 
+const MAC_FN_NAV_KEYS = new Set(["Home", "End", "PageUp", "PageDown"]);
+const MAC_FN_TRANSLATED_CODES = new Set([
+  "Delete",
+  "Home",
+  "End",
+  "PageUp",
+  "PageDown",
+  "NumpadEnter",
+]);
+
 export function resolveKeyCode(
   code: string,
   key: string,
   keyCode = 0,
   os: OsMode = "windows"
 ): string {
+  if (os === "mac") {
+    if (MAC_MEDIA_TO_FKEY[code]) return MAC_MEDIA_TO_FKEY[code];
+    if (MAC_MEDIA_TO_FKEY[key]) return MAC_MEDIA_TO_FKEY[key];
+  }
+
   if (
     code === "Fn" ||
+    code === "FnLock" ||
     code === "Globe" ||
     code === "Function" ||
     key === "Fn" ||
+    key === "FnLock" ||
     key === "Function" ||
     key === "Globe" ||
-    (os === "mac" && (keyCode === 63 || keyCode === 179))
+    (os === "mac" &&
+      (keyCode === 63 || (keyCode === 179 && (!code || code === "Unidentified"))))
   ) {
     return "Fn";
   }
@@ -112,9 +131,8 @@ export function resolveKeyCode(
     return "F11";
   }
 
-  if (os === "mac") {
-    if (MAC_MEDIA_TO_FKEY[code]) return MAC_MEDIA_TO_FKEY[code];
-    if (MAC_MEDIA_TO_FKEY[key]) return MAC_MEDIA_TO_FKEY[key];
+  if ((!code || code === "Unidentified") && keyCode >= 112 && keyCode <= 123) {
+    return `F${keyCode - 111}`;
   }
 
   if (code && code !== "Unidentified") {
@@ -142,6 +160,7 @@ export function mapCharOrKeyToCode(key: string): string {
 export function isMacFnChordEvent(
   code: string,
   key: string,
+  location: number,
   fnModifierActive: boolean,
   os: OsMode
 ): boolean {
@@ -149,11 +168,16 @@ export function isMacFnChordEvent(
   return (
     fnModifierActive ||
     (code === "Backspace" && key === "Delete") ||
-    (code.startsWith("Arrow") && ["Home", "End", "PageUp", "PageDown"].includes(key))
+    (code === "Delete" && key === "Delete") ||
+    (code.startsWith("Arrow") && MAC_FN_NAV_KEYS.has(key)) ||
+    MAC_FN_TRANSLATED_CODES.has(code) ||
+    (code === "Enter" && location === 3)
   );
 }
 
 export function formatReadableKey(code: string, key: string): string {
+  if (code === "Fn") return "Fn";
+  if (code === "F11") return "F11";
   if (key === " ") return "Space";
   if (key && key !== "Unidentified" && key.length === 1) return key.toUpperCase();
   if (key && key !== "Unidentified") return key;

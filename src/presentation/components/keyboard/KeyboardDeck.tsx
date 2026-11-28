@@ -233,10 +233,73 @@ export const KeyboardDeck = memo(function KeyboardDeck({
         </span>
       </div>
 
-      {/* macOS Hardware Notice */}
+      {/* OS Special Keys Notice (macOS fn/F11 live status & bypass + Windows/Linux F11 Fullscreen Lock tip) */}
       <AnimatePresence initial={false}>
-        {os === "mac" && (
+        {os === "mac" ? (
           <motion.div
+            key="mac-hardware-notice"
+            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+            animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-black/[0.06] bg-black/[0.025] px-3 py-2 text-[11px] text-[var(--text-secondary)] dark:border-white/[0.08] dark:bg-white/[0.03]">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <strong className="font-semibold text-[var(--text-primary)]">
+                  macOS 🌐 fn &amp; F11:
+                </strong>
+                <span>
+                  Test{" "}
+                  <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                    fn
+                  </kbd>{" "}
+                  via{" "}
+                  <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                    fn + delete
+                  </kbd>{" "}
+                  (or{" "}
+                  <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                    fn + return
+                  </kbd>
+                  ). Test{" "}
+                  <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                    F11
+                  </kbd>{" "}
+                  via{" "}
+                  <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                    ⌃ control + fn + F11
+                  </kbd>{" "}
+                  to bypass macOS Show Desktop without changing settings (or uncheck{" "}
+                  <em>Show Desktop</em> in <em>System Settings → Keyboard Shortcuts → Mission Control</em>).
+                </span>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] font-semibold">
+                <span
+                  className={`rounded-full px-2 py-0.5 ${
+                    testedKeys.has("Fn")
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                      : "bg-black/[0.05] text-[var(--text-tertiary)] dark:bg-white/[0.08]"
+                  }`}
+                >
+                  {testedKeys.has("Fn") ? "✓ fn verified" : "fn untested"}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-0.5 ${
+                    testedKeys.has("F11")
+                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                      : "bg-black/[0.05] text-[var(--text-tertiary)] dark:bg-white/[0.08]"
+                  }`}
+                >
+                  {testedKeys.has("F11") ? "✓ F11 verified" : "F11 untested"}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="win-hardware-notice"
             initial={{ opacity: 0, height: 0, marginTop: 0 }}
             animate={{ opacity: 1, height: "auto", marginTop: 8 }}
             exit={{ opacity: 0, height: 0, marginTop: 0 }}
@@ -246,22 +309,31 @@ export const KeyboardDeck = memo(function KeyboardDeck({
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-black/[0.06] bg-black/[0.025] px-3 py-2 text-[11px] text-[var(--text-secondary)] dark:border-white/[0.08] dark:bg-white/[0.03]">
               <span>
                 <strong className="font-semibold text-[var(--text-primary)]">
-                  macOS 🌐 fn &amp; F11:
+                  F11 &amp; Browser Shortcuts:
                 </strong>{" "}
-                Hold{" "}
-                <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
-                  fn
-                </kbd>{" "}
-                +{" "}
-                <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
-                  delete
-                </kbd>{" "}
-                /{" "}
+                Keep <strong>Key Lock On</strong> to block browser actions, or click{" "}
+                <strong>FS Lock</strong> in the top bar to trap browser-reserved{" "}
                 <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
                   F11
                 </kbd>{" "}
-                to verify both keys. If macOS intercepts single-tap 🌐 (Emoji) or F11 (Show
-                Desktop), disable them in <em>System Settings → Keyboard</em>.
+                ,{" "}
+                <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                  Esc
+                </kbd>{" "}
+                &amp;{" "}
+                <kbd className="rounded bg-white/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-[var(--text-primary)] shadow-2xs dark:bg-white/10">
+                  Ctrl
+                </kbd>{" "}
+                combos.
+              </span>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                  testedKeys.has("F11")
+                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                    : "bg-black/[0.05] text-[var(--text-tertiary)] dark:bg-white/[0.08]"
+                }`}
+              >
+                {testedKeys.has("F11") ? "✓ F11 verified" : "F11 untested"}
               </span>
             </div>
           </motion.div>

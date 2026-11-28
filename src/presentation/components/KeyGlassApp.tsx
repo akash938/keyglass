@@ -25,6 +25,11 @@ export function KeyGlassApp() {
     setSoundEnabled,
     testLock,
     toggleTestLock,
+    fullscreenLocked,
+    keyboardApiLocked,
+    canFullscreenLock,
+    canKeyboardLockApi,
+    toggleFullscreenLock,
     isFocused,
     focusKeyboardStage,
     adOpen,
@@ -66,6 +71,11 @@ export function KeyGlassApp() {
           onToggleSound={handleToggleSound}
           testLock={testLock}
           onToggleTestLock={toggleTestLock}
+          fullscreenLocked={fullscreenLocked}
+          keyboardApiLocked={keyboardApiLocked}
+          canFullscreenLock={canFullscreenLock}
+          canKeyboardLockApi={canKeyboardLockApi}
+          onToggleFullscreenLock={toggleFullscreenLock}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
           onReset={handleReset}
@@ -88,34 +98,43 @@ export function KeyGlassApp() {
             <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
               <motion.button
                 type="button"
-                tabIndex={-1}
+                tabIndex={testLock ? -1 : 0}
+                aria-pressed={testLock}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => {
-                  if (!testLock) {
-                    toggleTestLock();
-                  } else {
+                  if (!isFocused) {
                     focusKeyboardStage();
+                  } else {
+                    toggleTestLock();
                   }
                 }}
                 className={`glass-pill inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1 text-[11.5px] font-medium transition-colors ${
                   isFocused && testLock
-                    ? "border-emerald-500/35 text-emerald-700 dark:text-emerald-300"
+                    ? fullscreenLocked
+                      ? "border-[var(--accent)]/40 text-[var(--accent)]"
+                      : "border-emerald-500/35 text-emerald-700 dark:text-emerald-300"
                     : "border-amber-500/40 text-amber-700 dark:text-amber-300"
                 }`}
               >
                 <span
                   className={`h-2 w-2 rounded-full ${
                     isFocused && testLock
-                      ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.85)]"
+                      ? fullscreenLocked
+                        ? "bg-[var(--accent)] shadow-[0_0_8px_rgba(0,113,227,0.85)]"
+                        : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.85)]"
                       : "bg-amber-500"
                   }`}
                 />
                 <span>
-                  {isFocused && testLock
-                    ? "Key Lock On — Focused & Default Key Actions Blocked"
-                    : !isFocused
-                      ? "Window Unfocused — Click Anywhere to Resume Key Capture"
-                      : "Key Lock Off — Click Key Lock On to Block Default Actions"}
+                  {!isFocused
+                    ? "Window Unfocused — Click Anywhere to Resume Key Capture"
+                    : testLock && fullscreenLocked && keyboardApiLocked
+                      ? "Fullscreen Key Lock Active — Browser Shortcuts & F1–F12 Trapped (Click to Unlock)"
+                      : testLock && fullscreenLocked
+                        ? "Fullscreen Key Lock Active — Default Key Actions Blocked (Click to Turn Off)"
+                        : testLock
+                          ? "Key Lock On — Default Key Actions Blocked (Click to Turn Off)"
+                          : "Key Lock Off — Normal Browser Keys Active (Click to Turn On)"}
                 </span>
               </motion.button>
 
@@ -140,6 +159,7 @@ export function KeyGlassApp() {
             onSelectLayout={setLayout}
             os={os}
             onSelectOs={setOs}
+            testLock={testLock}
             mobileInputOpen={mobileInputOpen}
             onToggleMobileInput={toggleMobileInput}
             mobileText={mobileText}
@@ -169,7 +189,7 @@ export function KeyGlassApp() {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   type="button"
-                  tabIndex={-1}
+                  tabIndex={testLock ? -1 : 0}
                   onClick={handleCopyReport}
                   className="cursor-pointer rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-500"
                 >

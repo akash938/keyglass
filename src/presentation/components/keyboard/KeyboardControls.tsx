@@ -11,6 +11,7 @@ interface KeyboardControlsProps {
   onSelectLayout: (layout: KeyboardLayoutId) => void;
   os: OsMode;
   onSelectOs: (os: OsMode) => void;
+  testLock: boolean;
   mobileInputOpen: boolean;
   onToggleMobileInput: () => void;
   mobileText: string;
@@ -28,6 +29,7 @@ export const KeyboardControls = memo(function KeyboardControls({
   onSelectLayout,
   os,
   onSelectOs,
+  testLock,
   mobileInputOpen,
   onToggleMobileInput,
   mobileText,
@@ -36,6 +38,8 @@ export const KeyboardControls = memo(function KeyboardControls({
   copiedReport,
   onCopyReport,
 }: KeyboardControlsProps) {
+  const controlTabIndex = testLock ? -1 : 0;
+
   return (
     <>
       <motion.div
@@ -56,7 +60,7 @@ export const KeyboardControls = memo(function KeyboardControls({
               <motion.button
                 key={opt.id}
                 role="tab"
-                tabIndex={-1}
+                tabIndex={controlTabIndex}
                 aria-selected={selected}
                 type="button"
                 whileTap={{ scale: 0.95 }}
@@ -93,7 +97,7 @@ export const KeyboardControls = memo(function KeyboardControls({
                 <motion.button
                   key={mode}
                   role="tab"
-                  tabIndex={-1}
+                  tabIndex={controlTabIndex}
                   aria-selected={selected}
                   type="button"
                   whileTap={{ scale: 0.95 }}
@@ -124,7 +128,7 @@ export const KeyboardControls = memo(function KeyboardControls({
             whileTap={{ scale: 0.94 }}
             transition={TAP_SPRING}
             type="button"
-            tabIndex={-1}
+            tabIndex={controlTabIndex}
             onClick={onToggleMobileInput}
             className={`glass-pill inline-flex h-[34px] cursor-pointer items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-colors ${
               mobileInputOpen
@@ -141,7 +145,7 @@ export const KeyboardControls = memo(function KeyboardControls({
             whileTap={{ scale: 0.94 }}
             transition={TAP_SPRING}
             type="button"
-            tabIndex={-1}
+            tabIndex={controlTabIndex}
             onClick={onCopyReport}
             className="glass-pill inline-flex h-[34px] cursor-pointer items-center gap-1.5 rounded-full px-3 text-[12px] font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
           >

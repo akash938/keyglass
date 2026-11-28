@@ -34,7 +34,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     question: "Why don't keys like Mac Fn (Globe) or F11 always register on a single tap?",
     answer:
-      "macOS reserves single-tap Globe (fn) for Emoji & Symbols and F11 for Show Desktop at the OS level before any browser sees them. Hold fn + delete or fn + F11 to verify both immediately, or disable those macOS shortcuts in System Settings → Keyboard while keeping Key Lock On.",
+      "macOS intercepts single-tap Globe (fn) for Emoji/Input Source and unmodified F11 for Show Desktop at the OS level before any browser sees them. Hold fn + delete (or fn + return / fn + arrow keys) to verify fn immediately, and hold Control + fn + F11 (or Control + F11 with standard function keys enabled) to verify F11 without changing System Settings—or uncheck Show Desktop (F11) in System Settings → Keyboard → Keyboard Shortcuts → Mission Control. On Chrome/Edge, use FS Lock for W3C Fullscreen Keyboard Lock.",
   },
   {
     question: "Can I also test my laptop touchpad and mouse buttons here?",

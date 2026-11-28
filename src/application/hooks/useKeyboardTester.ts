@@ -25,6 +25,15 @@ import { formatDiagnosticReport } from "@/domain/services/report-formatter";
 import { SoundEnginePort } from "@/application/ports/sound-port";
 import { webAudioSoundEngine } from "@/infrastructure/audio/web-audio-sound-engine";
 import { copyTextToClipboard } from "@/infrastructure/browser/clipboard-service";
+import {
+  engageFullscreenKeyboardLock,
+  isDocumentFullscreen,
+  isFullscreenApiSupported,
+  isKeyboardLockApiSupported,
+  lockNavigatorKeyboard,
+  releaseFullscreenKeyboardLock,
+  unlockNavigatorKeyboard,
+} from "@/infrastructure/browser/keyboard-lock-service";
 
 export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEngine) {
   const [layout, setLayout] = useState<KeyboardLayoutId>("full");
@@ -32,6 +41,10 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [testLock, setTestLock] = useState<boolean>(true);
+  const [fullscreenLocked, setFullscreenLocked] = useState<boolean>(false);
+  const [keyboardApiLocked, setKeyboardApiLocked] = useState<boolean>(false);
+  const [canFullscreenLock, setCanFullscreenLock] = useState<boolean>(false);
+  const [canKeyboardLockApi, setCanKeyboardLockApi] = useState<boolean>(false);
   const [isFocused, setIsFocused] = useState<boolean>(true);
   const [adOpen, setAdOpen] = useState<boolean>(false);
   const [mobileInputOpen, setMobileInputOpen] = useState<boolean>(false);
@@ -64,6 +77,7 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
   const activeKeysRef = useRef<Set<string>>(new Set());
   const soundEnabledRef = useRef<boolean>(soundEnabled);
   const testLockRef = useRef<boolean>(testLock);
+  const adOpenRef = useRef<boolean>(adOpen);
   const osRef = useRef<OsMode>(os);
   const captureStageRef = useRef<HTMLElement | null>(null);
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
@@ -75,6 +89,10 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
   useEffect(() => {
     testLockRef.current = testLock;
   }, [testLock]);
+
+  useEffect(() => {
+    adOpenRef.current = adOpen;
+  }, [adOpen]);
 
   useEffect(() => {
     osRef.current = os;
@@ -91,7 +109,7 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     setIsFocused(true);
   }, []);
 
-  // Auto-detect OS & viewport layout, enforce default Apple White theme, focus stage & show ad on every visit
+  // Auto-detect OS, capabilities & viewport layout, enforce default Apple White theme, focus stage & show ad on every visit
   useEffect(() => {
     const ua = navigator.userAgent || "";
     const platform = navigator.platform || "";
@@ -101,6 +119,9 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     if (window.innerWidth < 820 || (isApple && window.innerWidth < 1260)) {
       setLayout("laptop");
     }
+
+    setCanFullscreenLock(isFullscreenApiSupported());
+    setCanKeyboardLockApi(isKeyboardLockApiSupported());
 
     // Always default to Apple White (Light Frost); Dark Mode activates only on explicit user click
     setDarkMode(false);
@@ -113,21 +134,63 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     return () => {
       window.clearTimeout(focusTimer);
       window.clearTimeout(adTimer);
+      unlockNavigatorKeyboard();
     };
   }, [focusKeyboardStage]);
 
   const handleCloseAd = useCallback(() => {
+    adOpenRef.current = false;
     setAdOpen(false);
-    window.setTimeout(focusKeyboardStage, 40);
+    if (testLockRef.current) {
+      window.setTimeout(focusKeyboardStage, 40);
+    }
   }, [focusKeyboardStage]);
 
   const toggleTestLock = useCallback(() => {
-    setTestLock((prev) => {
-      const next = !prev;
-      testLockRef.current = next;
-      return next;
-    });
-    window.setTimeout(focusKeyboardStage, 0);
+    const next = !testLockRef.current;
+    testLockRef.current = next;
+    setTestLock(next);
+
+    if (next) {
+      window.setTimeout(focusKeyboardStage, 0);
+      if (isDocumentFullscreen()) {
+        void lockNavigatorKeyboard().then((locked) => {
+          setKeyboardApiLocked(locked);
+        });
+      }
+    } else {
+      setFullscreenLocked(false);
+      setKeyboardApiLocked(false);
+      void releaseFullscreenKeyboardLock(true);
+      if (typeof document !== "undefined") {
+        const active = document.activeElement as HTMLElement | null;
+        if (active && active !== document.body) {
+          active.blur();
+        }
+      }
+    }
+  }, [focusKeyboardStage]);
+
+  const toggleFullscreenLock = useCallback(async () => {
+    if (isDocumentFullscreen()) {
+      await releaseFullscreenKeyboardLock(true);
+      setFullscreenLocked(false);
+      setKeyboardApiLocked(false);
+      if (testLockRef.current) {
+        window.setTimeout(focusKeyboardStage, 0);
+      }
+      return;
+    }
+
+    if (!testLockRef.current) {
+      testLockRef.current = true;
+      setTestLock(true);
+    }
+
+    const result = await engageFullscreenKeyboardLock();
+    setFullscreenLocked(result.fullscreen);
+    setKeyboardApiLocked(result.keyboardApiLocked);
+    window.setTimeout(focusKeyboardStage, 40);
   }, [focusKeyboardStage]);
 
   const toggleDarkMode = useCallback(() => {
@@ -136,7 +199,9 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
       document.documentElement.classList.toggle("dark", next);
       return next;
     });
-    window.setTimeout(focusKeyboardStage, 0);
+    if (testLockRef.current) {
+      window.setTimeout(focusKeyboardStage, 0);
+    }
   }, [focusKeyboardStage]);
 
   // Derived layout metrics
@@ -306,7 +371,7 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     }
   }, []);
 
-  // Capture-phase physical keyboard listener (blocks browser/OS defaults & keeps stage focused)
+  // Capture-phase physical keyboard listener (blocks browser/OS defaults & keeps stage focused when Key Lock is On)
   useEffect(() => {
     const isMobileBridgeTarget = (target: EventTarget | null) => {
       const el = target as HTMLElement | null;
@@ -324,11 +389,21 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (adOpenRef.current) {
+        if (e.key === "Escape" || e.code === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCloseAd();
+        }
+        return;
+      }
+
       const isMobileField = isMobileBridgeTarget(e.target);
 
       if (testLockRef.current && !isMobileField) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
       }
 
       syncLeds(e);
@@ -337,10 +412,18 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
         return;
       }
 
-      const fnModActive = typeof e.getModifierState === "function" && e.getModifierState("Fn");
+      const fnModActive =
+        typeof e.getModifierState === "function" &&
+        (e.getModifierState("Fn") || e.getModifierState("FnLock"));
       const rawKeyCode = e.keyCode || e.which || 0;
       const resolvedCode = resolveKeyCode(e.code, e.key, rawKeyCode, osRef.current);
-      const macFnChord = isMacFnChordEvent(e.code, e.key, fnModActive, osRef.current);
+      const macFnChord = isMacFnChordEvent(
+        e.code,
+        e.key,
+        e.location,
+        fnModActive,
+        osRef.current
+      );
 
       if (macFnChord && resolvedCode !== "Fn") {
         activeKeysRef.current.add("Fn");
@@ -369,23 +452,29 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     };
 
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (adOpenRef.current) return;
       if (testLockRef.current && !isMobileBridgeTarget(e.target)) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (adOpenRef.current) return;
       const isMobileField = isMobileBridgeTarget(e.target);
 
       if (testLockRef.current && !isMobileField) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
       }
 
       syncLeds(e);
 
-      const fnStillHeld = typeof e.getModifierState === "function" && e.getModifierState("Fn");
+      const fnStillHeld =
+        typeof e.getModifierState === "function" &&
+        (e.getModifierState("Fn") || e.getModifierState("FnLock"));
       if (!fnStillHeld && activeKeysRef.current.has("Fn")) {
         activeKeysRef.current.delete("Fn");
       }
@@ -411,13 +500,15 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     };
 
     const handlePointerUpGlobal = (e: PointerEvent) => {
-      if (isMobileBridgeTarget(e.target)) return;
+      if (!testLockRef.current || isMobileBridgeTarget(e.target)) return;
       window.setTimeout(focusKeyboardStage, 0);
     };
 
     const handleWindowFocus = () => {
       setIsFocused(true);
-      focusKeyboardStage();
+      if (testLockRef.current) {
+        focusKeyboardStage();
+      }
     };
 
     const handleWindowBlur = () => {
@@ -427,8 +518,24 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && testLockRef.current) {
         focusKeyboardStage();
+      }
+    };
+
+    const handleFullscreenChange = () => {
+      const inFs = isDocumentFullscreen();
+      setFullscreenLocked(inFs);
+      if (inFs && testLockRef.current) {
+        void lockNavigatorKeyboard().then((locked) => {
+          setKeyboardApiLocked(locked);
+        });
+      } else if (!inFs) {
+        unlockNavigatorKeyboard();
+        setKeyboardApiLocked(false);
+        if (testLockRef.current) {
+          window.setTimeout(focusKeyboardStage, 30);
+        }
       }
     };
 
@@ -440,6 +547,7 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     window.addEventListener("focus", handleWindowFocus);
     window.addEventListener("blur", handleWindowBlur);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown, { capture: true });
@@ -450,8 +558,9 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
       window.removeEventListener("focus", handleWindowFocus);
       window.removeEventListener("blur", handleWindowBlur);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
-  }, [recordKeyDown, recordKeyUp, focusKeyboardStage]);
+  }, [recordKeyDown, recordKeyUp, focusKeyboardStage, handleCloseAd]);
 
   const handleMobileInputChange = useCallback(
     (value: string) => {
@@ -487,7 +596,9 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     setHistory([]);
     setLastEvent(null);
     setResetSignal((s) => s + 1);
-    window.setTimeout(focusKeyboardStage, 0);
+    if (testLockRef.current) {
+      window.setTimeout(focusKeyboardStage, 0);
+    }
   }, [focusKeyboardStage]);
 
   const handleCopyReport = useCallback(async () => {
@@ -509,7 +620,9 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
       setCopiedReport(true);
       window.setTimeout(() => setCopiedReport(false), 2200);
     }
-    window.setTimeout(focusKeyboardStage, 0);
+    if (testLockRef.current) {
+      window.setTimeout(focusKeyboardStage, 0);
+    }
   }, [
     layout,
     os,
@@ -527,7 +640,7 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
       const next = !prev;
       if (next) {
         window.setTimeout(() => mobileInputRef.current?.focus(), 80);
-      } else {
+      } else if (testLockRef.current) {
         window.setTimeout(focusKeyboardStage, 40);
       }
       return next;
@@ -549,6 +662,11 @@ export function useKeyboardTester(soundEngine: SoundEnginePort = webAudioSoundEn
     setSoundEnabled,
     testLock,
     toggleTestLock,
+    fullscreenLocked,
+    keyboardApiLocked,
+    canFullscreenLock,
+    canKeyboardLockApi,
+    toggleFullscreenLock,
     isFocused,
     focusKeyboardStage,
     adOpen,

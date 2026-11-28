@@ -84,7 +84,7 @@ export const AdDialog = memo(function AdDialog({ open, onClose }: AdDialogProps)
                   </span>
 
                   <h2 className="mt-3.5 text-xl font-semibold tracking-[-0.025em] text-[var(--text-primary)] sm:text-2xl">
-                    Your Premium Advertisement Runs Here
+                    Premium Advertisement Runs Here
                   </h2>
 
                   <p className="mt-2 text-[13.5px] leading-relaxed text-[var(--text-secondary)]">
